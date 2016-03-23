@@ -1,0 +1,7 @@
+dependencies {
+	compile project(':Core')
+	
+	compile 'com.github.dvdme:ForecastIOLib:1.5.5'
+	compile 'com.google.maps:google-maps-services:0.1.11'
+	
+}
