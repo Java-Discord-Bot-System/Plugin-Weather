@@ -1,8 +1,9 @@
 package com.almightyalpaca.discord.bot.plugin.weather;
 
-import com.almightyalpaca.discord.bot.system.command.AbstractCommand;
-import com.almightyalpaca.discord.bot.system.command.annotation.Command;
-import com.almightyalpaca.discord.bot.system.events.CommandEvent;
+import com.almightyalpaca.discord.bot.system.command.Command;
+import com.almightyalpaca.discord.bot.system.command.CommandHandler;
+import com.almightyalpaca.discord.bot.system.config.Config;
+import com.almightyalpaca.discord.bot.system.events.commands.CommandEvent;
 import com.almightyalpaca.discord.bot.system.exception.PluginLoadingException;
 import com.almightyalpaca.discord.bot.system.exception.PluginUnloadingException;
 import com.almightyalpaca.discord.bot.system.plugins.Plugin;
@@ -13,14 +14,15 @@ import com.google.maps.GeoApiContext;
 import com.google.maps.GeocodingApi;
 import com.google.maps.model.GeocodingResult;
 
-public class WeatherPlugin extends Plugin {// FIXME
-	class WeatherCommand extends AbstractCommand { // FIXME HARDER
+public class WeatherPlugin extends Plugin { // FIXME
+
+	class WeatherCommand extends Command { // FIXME HARDER
 
 		public WeatherCommand() {
 			super("weather", "Returns the current weather", "weather [location]");
 		}
 
-		@Command(dm = true, guild = true, async = true)
+		@CommandHandler(dm = true, guild = true, async = true)
 		public void onCommand(final CommandEvent event, final String location) {
 			try {
 
@@ -58,11 +60,11 @@ public class WeatherPlugin extends Plugin {// FIXME
 
 	}
 
-	private static final PluginInfo	INFO	= new PluginInfo("com.almightyalpaca.discord.bot.plugin.weather", "1.0.0", "Almighty Alpaca", "Weather Plugin",
-			"Returns the weather using <http://forecast.io>");
+	private static final PluginInfo INFO = new PluginInfo("com.almightyalpaca.discord.bot.plugin.weather", "1.0.0", "Almighty Alpaca", "Weather Plugin",
+		"Returns the weather using <http://forecast.io>");
 
-	ForecastIO						io;
-	GeoApiContext					context;
+	ForecastIO		io;
+	GeoApiContext	context;
 
 	public WeatherPlugin() {
 		super(WeatherPlugin.INFO);
@@ -70,8 +72,15 @@ public class WeatherPlugin extends Plugin {// FIXME
 
 	@Override
 	public void load() throws PluginLoadingException {
-		this.io = new ForecastIO(this.getBridge().getSecureConfig("ForecastIO").getString("API_KEY"));
-		this.context = new GeoApiContext().setApiKey(this.getBridge().getSecureConfig("google").getString("API_KEY"));
+		Config forecastConfig = this.getSharedConfig("forecastio");
+		Config googleConfig = this.getSharedConfig("google");
+
+		if (googleConfig.getString("key", "Your Key") == "Your Key" | forecastConfig.getString("key", "Your Key") == "Your Key") {
+			throw new PluginLoadingException("Pls add your google and forecastio api keys to the config");
+		}
+
+		this.io = new ForecastIO(forecastConfig.getString("key"));
+		this.context = new GeoApiContext().setApiKey(googleConfig.getString("key"));
 		this.registerCommand(new WeatherCommand());
 	}
 
